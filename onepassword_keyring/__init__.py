@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 import sys
+import shlex
 
 from keyring import backend
 from jaraco.classes import properties
@@ -10,7 +11,7 @@ PRIORITY = 10
 
 
 def cli_exec(command: str):
-    result = subprocess.run(command.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.stdout, result.stderr
 
 
@@ -36,7 +37,7 @@ def _auth():
 
 
 def _item_exists(service, username):
-    command = f"op item get {service} --fields username"
+    command = f'op item get "{service}" --fields username'
     stdout, stderr = cli_exec(command)
     if stderr:
         raise RuntimeError("Error checking if item exists: " + stderr)
@@ -62,7 +63,7 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_password(self, service, username):
         _auth()
-        command = f"op item get {service} --fields username,password"
+        command = f'op item get "{service}" --fields username,password'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get password: " + stderr)
@@ -75,10 +76,10 @@ class OnePasswordBackend(backend.KeyringBackend):
     def set_password(self, service, username, password):
         _auth()
         if _item_exists(service, username):
-            command = f"op item edit {service} username={username} password={password}"
+            command = f'op item edit "{service}" username="{username}" password="{password}"'
             stdout, stderr = cli_exec(command)
         else:
-            command = f"op item create title={service} username={username} password={password} --category=login"
+            command = f'op item create title="{service}" username="{username}" password="{password}" --category=login'
             stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to set password: " + stderr)
@@ -86,7 +87,7 @@ class OnePasswordBackend(backend.KeyringBackend):
     def delete_password(self, service, username):
         _auth()
         if _item_exists(service, username):
-            command = f"op delete item {service}"
+            command = f'op delete item "{service}"'
             stdout, stderr = cli_exec(command)
             if stderr:
                 raise RuntimeError("Failed to delete password: " + stderr)
@@ -96,7 +97,7 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_otp(self, service, username):
         _auth()
-        command = f"op item get {service} --otp"
+        command = f'op item get "{service}" --otp'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get otp: " + stderr)
@@ -105,7 +106,18 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_item(self, service):
         _auth()
-        command = f"op get item {service}"
+        command = f'op item get "{service}"'
+        stdout, stderr = cli_exec(command)
+        if stderr:
+            raise RuntimeError("Failed to get item: " + stderr)
+        return stdout.strip()
+
+    def get_credential(self, service, username=None):
+        """
+        Return a credential object stored in the active keyring. Unlike the calling keyring.get_credential, this method ignores the username argument.
+        """
+        _auth()
+        command = f'op item get "{service}"'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get item: " + stderr)
