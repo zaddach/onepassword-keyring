@@ -44,9 +44,6 @@ dev = [
     "pytest-cov"
 ]
 
-[project.scripts]
-onepassword-keyring = "onepassword-keyring:run_as_a_module"
-
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"]}
 
@@ -59,7 +56,7 @@ include-package-data = true
 ]
 
 [tool.setuptools.package-dir]
-onepassword-keyring = "onepassword_keyring"
+onepassword_keyring = "onepassword_keyring"
 
 [tool.flake8]
 max-line-length = 88
