@@ -27,6 +27,33 @@ first.
 
 `onepassword-keyring` will automatically ask for credentials when needed.
 
+### Example
+```
+import keyring
+from onepassword_keyring import OnePasswordBackend
+
+# Set 1Password as your keyring
+keyring.set_keyring(OnePasswordBackend())
+
+# If you have more than one 1Password account, either sign in manually...:
+from onepassword_keyring import sign_in
+sign_in(account="my.1password.com")
+
+# ...Or set the OP_ACCOUNT environment variable
+import os
+os.environ["OP_ACCOUNT"] = "my.1password.com"
+
+# Create a new item
+kr.set_password("my-password-item", "my-username", "my-password")
+
+# Look up your password
+my_password = kr.get_password("my-password-item", "my-username")
+print(my_password)
+
+# Delete an existing item
+kr.delete_password("my-password-item", "my-username")
+```
+
 ## Caveats
 
 This fork was made for personal use and is not guaranteed to work in all cases. Please use with caution, as I can't take responsibility for any issues that may arise from using this package.
