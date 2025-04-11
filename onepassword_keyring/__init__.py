@@ -23,26 +23,35 @@ def _user_is_authenticated():
     return True
 
 
-def sign_in():
+def sign_in(account: str | None = None):
+    """
+    Sign in to 1Password.
+
+    If an account is provided, sign in to that account. Otherwise, sign in to the default account. 
+    Accounts are identified by URL (e.g. my.1password.com) or the account's 26-digit alphanumeric UUID.
+    """
     command = "op signin"
+    if account:
+        command += f" --account {account}"
     stdout, stderr = cli_exec(command)
     if stderr:
         raise RuntimeError("Failed to sign in to 1Password: " + stderr)
     return True
 
-
 def _auth():
     if not _user_is_authenticated():
         sign_in()
-
+    return True
 
 def _item_exists(service, username):
     command = f'op item get "{service}" --fields username'
     stdout, stderr = cli_exec(command)
     if stderr:
+        if "Specify the item with its UUID, name, or domain." in stderr:
+            return False
         raise RuntimeError("Error checking if item exists: " + stderr)
     else:
-        return stdout == username
+        return stdout.strip() == username
 
 
 def _onepassword_cli_installed():
@@ -63,14 +72,14 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_password(self, service, username):
         _auth()
-        command = f'op item get "{service}" --fields username,password'
+        command = f'op item get "{service}" --fields username,password --reveal'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get password: " + stderr)
         else:
-            username, password = stdout.strip().split(",")
-            if username != username:
-                password = None
+            fetched_username, password = stdout.strip().split(",")
+            if username != fetched_username:
+                raise RuntimeError(f"Username mismatch: Provided username was {username}, expected username was {fetched_username}")
             return password.strip()
 
     def set_password(self, service, username, password):
@@ -87,7 +96,7 @@ class OnePasswordBackend(backend.KeyringBackend):
     def delete_password(self, service, username):
         _auth()
         if _item_exists(service, username):
-            command = f'op delete item "{service}"'
+            command = f'op item delete "{service}"'
             stdout, stderr = cli_exec(command)
             if stderr:
                 raise RuntimeError("Failed to delete password: " + stderr)
@@ -97,7 +106,7 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_otp(self, service, username):
         _auth()
-        command = f'op item get "{service}" --otp'
+        command = f'op item get "{service}" --otp --reveal'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get otp: " + stderr)
@@ -106,7 +115,7 @@ class OnePasswordBackend(backend.KeyringBackend):
 
     def get_item(self, service):
         _auth()
-        command = f'op item get "{service}"'
+        command = f'op item get "{service}" --reveal'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get item: " + stderr)
@@ -117,7 +126,7 @@ class OnePasswordBackend(backend.KeyringBackend):
         Return a credential object stored in the active keyring. Unlike the calling keyring.get_credential, this method ignores the username argument.
         """
         _auth()
-        command = f'op item get "{service}"'
+        command = f'op item get "{service}" --reveal'
         stdout, stderr = cli_exec(command)
         if stderr:
             raise RuntimeError("Failed to get item: " + stderr)
