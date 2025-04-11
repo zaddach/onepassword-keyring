@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "onepassword-keyring"
+version = "0.2.0"
+description = "Keyring backend reading password data from 1Password"
+authors = [
+    {name = "Falling Springs", email = "fallstosprings@gmail.com"},
+]
+maintainers = [
+    {name = "Falling Springs", email = "fallstosprings@gmail.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.6.2"
+keywords = ["onepassword", "keyring", "password"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3"
+]
+dependencies = [
+    "keyring"
+]
+
+[project.urls]
+Home = "https://github.com/falling-springs/onepassword-keyring"
+Documentation = "https://github.com/falling-springs/onepassword-keyring"
+Source = "https://github.com/falling-springs/onepassword-keyring"
+
+[project.entry-points."keyring"]
+backends = "onepassword_keyring"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-mock",
+    "pytest-cov"
+]
+
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov-branch --cov-report html --cov-report term --cov=onepassword_keyring -vv"
+testpaths = [
+    "tests"
+]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B"]
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
