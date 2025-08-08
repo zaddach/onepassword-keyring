@@ -20,6 +20,15 @@ This project uses the official [1Password CLI](https://developer.1password.com/d
 pip install onepassword-keyring
 ```
 
+Further, to automatically load the backend, you need to add it to keyring's configuration file:
+```python
+import os
+import keyring
+
+with open(os.path.join(keyring.util.platform_.config_root(), "keyringrc.cfg"), "w") as f:
+    f.write("[backend]\ndefault-keyring=onepassword_keyring.OnePasswordBackend")
+```
+
 ## Usage
 
 Use as a normal keyring backend. It is installed with priority 10 so it's likely going to be selected
